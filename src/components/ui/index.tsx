@@ -156,15 +156,32 @@ const useStyle = createStyles(({ token, css }) => {
     return {
         layout: css`
         width: 100%;
-        height: 100vh;
+        height: 100dvh;
         display: flex;
         background: ${token.colorBgContainer};
         font-family: AlibabaPuHuiTi, ${token.fontFamily}, sans-serif;
         position: relative;
         overflow: hidden;
         
+        /* 全局隐藏滚动条样式 */
+        * {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE/Edge */
+          
+          &::-webkit-scrollbar {
+            display: none; /* Chrome/Safari/Webkit */
+          }
+        }
+        
+        /* iOS安全区域支持 */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        
         @media (max-width: 768px) {
           flex-direction: column;
+    
         }
       `,
         // 手机端顶部菜单栏
@@ -253,6 +270,14 @@ const useStyle = createStyles(({ token, css }) => {
         overflow-y: auto;
         margin-top: 12px;
         padding: 0;
+        
+        /* 隐藏滚动条但保持滚动功能 */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+        
+        &::-webkit-scrollbar {
+          display: none; /* Chrome/Safari/Webkit */
+        }
   
         .ant-conversations-list {
           padding-inline-start: 0;
@@ -311,6 +336,14 @@ const useStyle = createStyles(({ token, css }) => {
         chatList: css`
         flex: 1;
         overflow: auto;
+        
+        /* 隐藏滚动条但保持滚动功能 */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+        
+        &::-webkit-scrollbar {
+          display: none; /* Chrome/Safari/Webkit */
+        }
         
         @media (max-width: 768px) {
           min-height: 0;
@@ -747,7 +780,7 @@ const Independent: React.FC = () => {
                     onSubmit(info.data.description as string);
                 }}
                 styles={{
-                    item: { padding: '6px 12px' },
+                    item: { padding: '6px 12px', marginBottom: '10px' },
                 }}
                 className={styles.senderPrompt}
             />

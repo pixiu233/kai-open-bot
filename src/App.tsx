@@ -43,7 +43,7 @@ function App() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout >
       {/* <Header style={{
         display: 'flex',
         alignItems: 'center',
@@ -65,7 +65,7 @@ function App() {
       {/* <Content style={{ padding: '24px' }}> */}
       <Outlet />
       {/* </Content> */}
-    </Layout>
+    </Layout >
   );
 }
 
