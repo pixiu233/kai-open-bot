@@ -298,7 +298,7 @@ const useStyle = createStyles(({ token, css }) => {
         flex-direction: column;
         padding-block: ${token.paddingLG}px;
         gap: 16px;
-        
+        width: 100%;
         @media (max-width: 768px) {
           height: calc(100vh - 48px);
           padding: 8px;
@@ -705,7 +705,7 @@ const Independent: React.FC = () => {
                 <Space
                     direction="vertical"
                     size={16}
-                    style={{ paddingInline: 'calc(calc(100% - 700px) /2)' }}
+                    style={{ paddingInline: 'calc(calc(100% - 700px) /2)', width: '100%' }}
                     className={`${styles.placeholder} ${styles.mobileWelcome}`}
                 >
                     <Welcome
