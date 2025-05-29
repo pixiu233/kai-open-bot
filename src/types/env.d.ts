@@ -1,7 +1,8 @@
-/// <reference types="vite/client" />
-
 /// Environment variables type definitions
 /// 环境变量类型定义
+
+/// <reference types="vite/client" />
+
 interface ImportMetaEnv {
     // App configuration
     readonly VITE_APP_TITLE: string;
@@ -16,15 +17,15 @@ interface ImportMetaEnv {
     readonly VITE_ENABLE_DEBUG: string;
     readonly VITE_ENABLE_MOCK: string;
 
-    // AI services
-    readonly VITE_DASHSCOPE_API_KEY: string;
-    readonly VITE_DASHSCOPE_BASE_URL: string;
-
     // Third-party services
     readonly VITE_ANALYTICS_ID: string;
     readonly VITE_SENTRY_DSN: string;
+
+    // AI services
+    readonly VITE_DASHSCOPE_API_KEY: string;
+    readonly VITE_DASHSCOPE_BASE_URL: string;
 }
 
 interface ImportMeta {
     readonly env: ImportMetaEnv;
-}
+} 

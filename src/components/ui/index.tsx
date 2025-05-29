@@ -10,6 +10,7 @@ import {
     FileSearchOutlined,
     HeartOutlined,
     LikeOutlined,
+    MenuOutlined,
     PaperClipOutlined,
     PlusOutlined,
     ProductOutlined,
@@ -29,20 +30,28 @@ import {
     useXAgent,
     useXChat,
 } from '@ant-design/x';
-import { Avatar, Button, Flex, type GetProp, Space, Spin, message } from 'antd';
+import { Avatar, Button, Drawer, Flex, type GetProp, Space, Spin, message } from 'antd';
 import { createStyles } from 'antd-style';
 import dayjs from 'dayjs';
+import OpenAI from 'openai';
 import React, { useEffect, useRef, useState } from 'react';
+import { appConfig } from '../../config/env';
 
 type BubbleDataType = {
     role: string;
     content: string;
 };
+const client = new OpenAI({
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    apiKey: appConfig.dashscopeApiKey || '',
+    dangerouslyAllowBrowser: true,
+});
+
 
 const DEFAULT_CONVERSATIONS_ITEMS = [
     {
         key: 'default-0',
-        label: 'What is Ant Design X?',
+        label: 'What is 凯哥人工智能?',
         group: 'Today',
     },
     {
@@ -63,7 +72,7 @@ const HOT_TOPICS = {
     children: [
         {
             key: '1-1',
-            description: 'What has Ant Design X upgraded?',
+            description: 'What has 凯哥人工智能 upgraded?',
             icon: <span style={{ color: '#f93a4a', fontWeight: 700 }}>1</span>,
         },
         {
@@ -73,7 +82,7 @@ const HOT_TOPICS = {
         },
         {
             key: '1-3',
-            description: 'What components are in Ant Design X?',
+            description: 'What components are in 凯哥人工智能?',
             icon: <span style={{ color: '#ff8f1f', fontWeight: 700 }}>3</span>,
         },
         {
@@ -147,16 +156,62 @@ const useStyle = createStyles(({ token, css }) => {
     return {
         layout: css`
         width: 100%;
-        min-width: 1000px;
         height: 100vh;
         display: flex;
         background: ${token.colorBgContainer};
         font-family: AlibabaPuHuiTi, ${token.fontFamily}, sans-serif;
+        position: relative;
+        overflow: hidden;
+        
+        @media (max-width: 768px) {
+          flex-direction: column;
+        }
+      `,
+        // 手机端顶部菜单栏
+        mobileHeader: css`
+        display: none;
+        
+        @media (max-width: 768px) {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 16px;
+          background: ${token.colorBgContainer};
+          border-bottom: 1px solid ${token.colorBorderSecondary};
+          height: 48px;
+          flex-shrink: 0;
+          z-index: 100;
+          
+          .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            span {
+              font-weight: bold;
+              color: ${token.colorText};
+              font-size: 14px;
+            }
+          }
+        }
       `,
         // sider 样式
         sider: css`
         background: ${token.colorBgLayout}80;
         width: 280px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0 12px;
+        box-sizing: border-box;
+        
+        @media (max-width: 768px) {
+          display: none;
+        }
+      `,
+        // 手机端抽屉样式
+        drawerContent: css`
+        background: ${token.colorBgLayout}80;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -177,11 +232,21 @@ const useStyle = createStyles(({ token, css }) => {
           color: ${token.colorText};
           font-size: 16px;
         }
+        
+        @media (max-width: 768px) {
+          margin: 12px 0;
+          padding: 0 16px;
+        }
       `,
         addBtn: css`
         background: #1677ff0f;
         border: 1px solid #1677ff34;
         height: 40px;
+        
+        @media (max-width: 768px) {
+          height: 32px;
+          font-size: 12px;
+        }
       `,
         conversations: css`
         flex: 1;
@@ -199,6 +264,11 @@ const useStyle = createStyles(({ token, css }) => {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        
+        @media (max-width: 768px) {
+          height: 32px;
+          padding: 0 8px;
+        }
       `,
         // chat list 样式
         chat: css`
@@ -209,6 +279,13 @@ const useStyle = createStyles(({ token, css }) => {
         flex-direction: column;
         padding-block: ${token.paddingLG}px;
         gap: 16px;
+        
+        @media (max-width: 768px) {
+          height: calc(100vh - 48px);
+          padding: 8px;
+          gap: 8px;
+          overflow: hidden;
+        }
       `,
         chatPrompt: css`
         .ant-prompts-label {
@@ -221,10 +298,23 @@ const useStyle = createStyles(({ token, css }) => {
         .ant-prompts-icon {
           color: #000000a6 !important;
         }
+        
+        @media (max-width: 768px) {
+          .ant-prompts-label {
+            font-size: 12px !important;
+          }
+          .ant-prompts-desc {
+            font-size: 10px !important;
+          }
+        }
       `,
         chatList: css`
         flex: 1;
         overflow: auto;
+        
+        @media (max-width: 768px) {
+          min-height: 0;
+        }
       `,
         loadingMessage: css`
         background-image: linear-gradient(90deg, #ff6b23 0%, #af3cb8 31%, #53b6ff 89%);
@@ -234,22 +324,102 @@ const useStyle = createStyles(({ token, css }) => {
       `,
         placeholder: css`
         padding-top: 32px;
+        
+        @media (max-width: 768px) {
+          padding-top: 8px;
+        }
       `,
         // sender 样式
         sender: css`
         width: 100%;
         max-width: 700px;
         margin: 0 auto;
+        flex-shrink: 0;
+        
+        @media (max-width: 768px) {
+          max-width: 100%;
+          margin: 0;
+        }
       `,
         speechButton: css`
         font-size: 18px;
         color: ${token.colorText} !important;
+        
+        @media (max-width: 768px) {
+          font-size: 14px;
+        }
       `,
         senderPrompt: css`
         width: 100%;
         max-width: 700px;
         margin: 0 auto;
         color: ${token.colorText};
+        flex-shrink: 0;
+        
+        @media (max-width: 768px) {
+          max-width: 100%;
+          margin: 0;
+          
+          .ant-prompts-item {
+            padding: 2px 6px !important;
+            font-size: 10px !important;
+          }
+        }
+      `,
+        // 手机端特殊样式
+        mobileWelcome: css`
+        @media (max-width: 768px) {
+          .ant-welcome-title {
+            font-size: 16px !important;
+          }
+          .ant-welcome-description {
+            font-size: 12px !important;
+          }
+          .ant-welcome-icon {
+            width: 40px !important;
+            height: 40px !important;
+          }
+        }
+      `,
+        mobilePrompts: css`
+        @media (max-width: 768px) {
+          flex-direction: column !important;
+          gap: 4px !important;
+          
+          .ant-prompts-item {
+            margin-bottom: 0 !important;
+            padding: 8px !important;
+          }
+          
+          .ant-prompts-subitem {
+            padding: 4px 8px !important;
+          }
+        }
+      `,
+        mobileBubbleList: css`
+        @media (max-width: 768px) {
+          padding-inline: 4px !important;
+          
+          .ant-bubble {
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+          
+          .ant-bubble-footer {
+            .ant-btn {
+              font-size: 10px;
+              padding: 0 2px;
+              height: 20px;
+            }
+          }
+        }
+      `,
+        // 手机端输入区域
+        mobileInputArea: css`
+        @media (max-width: 768px) {
+          flex-shrink: 0;
+          padding: 4px 0;
+        }
       `,
     };
 });
@@ -269,87 +439,76 @@ const Independent: React.FC = () => {
 
     const [inputValue, setInputValue] = useState('');
 
+    // 新增移动端抽屉状态
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
     /**
      * 🔔 Please replace the BASE_URL, PATH, MODEL, API_KEY with your own values.
      */
 
     // ==================== Runtime ====================
-    const [agent] = useXAgent<BubbleDataType>({
-        baseURL: 'https://api.x.ant.design/api/llm_siliconflow_deepseekr1',
-        model: 'deepseek-ai/DeepSeek-R1',
-        dangerouslyApiKey: 'Bearer sk-xxxxxxxxxxxxxxxxxxxx',
-    });
-    const loading = agent.isRequesting();
+    const [agent] = useXAgent({
+        request: async (info, callbacks) => {
+            const { messages, message } = info;
 
-    const { onRequest, messages, setMessages } = useXChat({
-        agent,
-        requestFallback: (_, { error }) => {
-            if (error.name === 'AbortError') {
-                return {
-                    content: 'Request is aborted',
-                    role: 'assistant',
-                };
-            }
-            return {
-                content: 'Request failed, please try again!',
-                role: 'assistant',
-            };
-        },
-        transformMessage: (info) => {
-            const { originMessage, chunk } = info || {};
-            let currentContent = '';
-            let currentThink = '';
+            const { onSuccess, onUpdate, onError } = callbacks;
+
+            // current message
+            console.log('message', message);
+
+            // history messages
+            console.log('messages', messages);
+
+            let content: string = '';
+
             try {
-                if (chunk?.data && !chunk?.data.includes('DONE')) {
-                    const message = JSON.parse(chunk?.data);
-                    currentThink = message?.choices?.[0]?.delta?.reasoning_content || '';
-                    currentContent = message?.choices?.[0]?.delta?.content || '';
+                const stream = await client.chat.completions.create({
+                    model: 'qwen-plus',
+                    messages: [{ role: 'user', content: message || '' }],
+                    stream: true,
+                });
+
+                for await (const chunk of stream) {
+                    content += chunk.choices[0]?.delta?.content || '';
+
+                    onUpdate({ content } as any);
                 }
+
+                onSuccess([{ content }] as any);
             } catch (error) {
-                console.error(error);
+                // handle error
+                // onError();
             }
-
-            let content = '';
-
-            if (!originMessage?.content && currentThink) {
-                content = `<think>${currentThink}`;
-            } else if (
-                originMessage?.content?.includes('<think>') &&
-                !originMessage?.content.includes('</think>') &&
-                currentContent
-            ) {
-                content = `${originMessage?.content}</think>${currentContent}`;
-            } else {
-                content = `${originMessage?.content || ''}${currentThink}${currentContent}`;
-            }
-            return {
-                content: content,
-                role: 'assistant',
-            };
-        },
-        resolveAbortController: (controller) => {
-            abortController.current = controller;
         },
     });
 
+    const {
+        // use to send message
+        onRequest,
+        // use to render messages
+        messages,
+        setMessages,
+    } = useXChat({ agent });
+    const loading = agent.isRequesting();
     // ==================== Event ====================
     const onSubmit = (val: string) => {
         if (!val) return;
 
         if (loading) {
-            message.error('Request is in progress, please wait for the request to complete.');
+            message.error('请求进行中，请等待请求完成。');
             return;
         }
 
         onRequest({
             stream: true,
-            message: { role: 'user', content: val },
+            message: val,
         });
     };
 
     // ==================== Nodes ====================
-    const chatSider = (
-        <div className={styles.sider}>
+    // 提取侧边栏内容为独立组件
+    const siderContent = (
+        <div className={styles.drawerContent}>
             {/* 🌟 Logo */}
             <div className={styles.logo}>
                 <img
@@ -359,7 +518,7 @@ const Independent: React.FC = () => {
                     width={24}
                     height={24}
                 />
-                <span>Ant Design X</span>
+                <span>凯哥人工智能</span>
             </div>
 
             {/* 🌟 添加会话 */}
@@ -369,19 +528,20 @@ const Independent: React.FC = () => {
                     setConversations([
                         {
                             key: now,
-                            label: `New Conversation ${conversations.length + 1}`,
+                            label: `新对话 ${conversations.length + 1}`,
                             group: 'Today',
                         },
                         ...conversations,
                     ]);
                     setCurConversation(now);
                     setMessages([]);
+                    setDrawerOpen(false); // 手机端创建新对话后关闭抽屉
                 }}
                 type="link"
                 className={styles.addBtn}
                 icon={<PlusOutlined />}
             >
-                New Conversation
+                新对话
             </Button>
 
             {/* 🌟 会话管理 */}
@@ -396,6 +556,7 @@ const Independent: React.FC = () => {
                     setTimeout(() => {
                         setCurConversation(val);
                         setMessages(messageHistory?.[val] || []);
+                        setDrawerOpen(false); // 手机端切换对话后关闭抽屉
                     }, 100);
                 }}
                 groupable
@@ -403,12 +564,12 @@ const Independent: React.FC = () => {
                 menu={(conversation) => ({
                     items: [
                         {
-                            label: 'Rename',
+                            label: '重命名',
                             key: 'rename',
                             icon: <EditOutlined />,
                         },
                         {
-                            label: 'Delete',
+                            label: '删除',
                             key: 'delete',
                             icon: <DeleteOutlined />,
                             danger: true,
@@ -436,19 +597,49 @@ const Independent: React.FC = () => {
             </div>
         </div>
     );
+
+    const chatSider = (
+        <div className={styles.sider}>
+            {siderContent}
+        </div>
+    );
+
+    // 手机端顶部栏
+    const mobileHeader = (
+        <div className={styles.mobileHeader}>
+            <div className="logo">
+                <img
+                    src="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*eco6RrQhxbMAAAAAAAAAAAAADgCCAQ/original"
+                    draggable={false}
+                    alt="logo"
+                    width={16}
+                    height={16}
+                />
+                <span>凯哥人工智能</span>
+            </div>
+            <Button
+                type="text"
+                icon={<MenuOutlined />}
+                onClick={() => setDrawerOpen(true)}
+                size="small"
+            />
+        </div>
+    );
+
     const chatList = (
         <div className={styles.chatList}>
             {messages?.length ? (
                 /* 🌟 消息列表 */
                 <Bubble.List
                     items={messages?.map((i) => ({
-                        ...i.message,
+                        ...i.message as any,
                         classNames: {
                             content: i.status === 'loading' ? styles.loadingMessage : '',
                         },
                         typing: i.status === 'loading' ? { step: 5, interval: 20, suffix: <>💗</> } : false,
                     }))}
                     style={{ height: '100%', paddingInline: 'calc(calc(100% - 700px) /2)' }}
+                    className={styles.mobileBubbleList}
                     roles={{
                         assistant: {
                             placement: 'start',
@@ -470,13 +661,13 @@ const Independent: React.FC = () => {
                     direction="vertical"
                     size={16}
                     style={{ paddingInline: 'calc(calc(100% - 700px) /2)' }}
-                    className={styles.placeholder}
+                    className={`${styles.placeholder} ${styles.mobileWelcome}`}
                 >
                     <Welcome
                         variant="borderless"
                         icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
-                        title="Hello, I'm Ant Design X"
-                        description="Base on Ant Design, AGI product interface solution, create a better intelligent vision~"
+                        title="你好，我是凯哥人工智能"
+                        description="基于 Ant Design，AGI 产品界面解决方案，创造更好的智能视觉~"
                         extra={
                             <Space>
                                 <Button icon={<ShareAltOutlined />} />
@@ -484,7 +675,7 @@ const Independent: React.FC = () => {
                             </Space>
                         }
                     />
-                    <Flex gap={16}>
+                    <Flex gap={16} className={styles.mobilePrompts}>
                         <Prompts
                             items={[HOT_TOPICS]}
                             styles={{
@@ -526,7 +717,7 @@ const Independent: React.FC = () => {
     );
     const senderHeader = (
         <Sender.Header
-            title="Upload File"
+            title="上传文件"
             open={attachmentsOpen}
             onOpenChange={setAttachmentsOpen}
             styles={{ content: { padding: 0 } }}
@@ -537,18 +728,18 @@ const Independent: React.FC = () => {
                 onChange={(info) => setAttachedFiles(info.fileList)}
                 placeholder={(type) =>
                     type === 'drop'
-                        ? { title: 'Drop file here' }
+                        ? { title: '将文件拖到这里' }
                         : {
                             icon: <CloudUploadOutlined />,
-                            title: 'Upload files',
-                            description: 'Click or drag files to this area to upload',
+                            title: '上传文件',
+                            description: '点击或拖拽文件到此区域上传',
                         }
                 }
             />
         </Sender.Header>
     );
     const chatSender = (
-        <>
+        <div className={styles.mobileInputArea}>
             {/* 🌟 提示词 */}
             <Prompts
                 items={SENDER_PROMPTS}
@@ -591,9 +782,9 @@ const Independent: React.FC = () => {
                         </Flex>
                     );
                 }}
-                placeholder="Ask or input / use skills"
+                placeholder="询问或输入 / 使用技能"
             />
-        </>
+        </div>
     );
 
     useEffect(() => {
@@ -609,7 +800,21 @@ const Independent: React.FC = () => {
     // ==================== Render =================
     return (
         <div className={styles.layout}>
+            {mobileHeader}
             {chatSider}
+
+            {/* 手机端抽屉 */}
+            <Drawer
+                title={null}
+                placement="left"
+                closable={false}
+                onClose={() => setDrawerOpen(false)}
+                open={drawerOpen}
+                bodyStyle={{ padding: 0 }}
+                width={280}
+            >
+                {siderContent}
+            </Drawer>
 
             <div className={styles.chat}>
                 {chatList}
