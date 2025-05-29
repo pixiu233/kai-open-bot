@@ -23,6 +23,10 @@ export const router = createBrowserRouter([
 
         ],
     },
+    {
+        path: '/index',
+        element: <Home />,
+    }
 ]);
 
 /// Route paths constants
