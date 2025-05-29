@@ -33,19 +33,13 @@ import {
 import { Avatar, Button, Drawer, Flex, type GetProp, Space, Spin, message } from 'antd';
 import { createStyles } from 'antd-style';
 import dayjs from 'dayjs';
-import OpenAI from 'openai';
 import React, { useEffect, useRef, useState } from 'react';
-import { appConfig } from '../../config/env';
 
 type BubbleDataType = {
     role: string;
     content: string;
 };
-const client = new OpenAI({
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    apiKey: appConfig.dashscopeApiKey || '',
-    dangerouslyAllowBrowser: true,
-});
+
 
 
 const DEFAULT_CONVERSATIONS_ITEMS = [
@@ -480,63 +474,81 @@ const Independent: React.FC = () => {
      */
 
     // ==================== Runtime ====================
-    const [agent] = useXAgent({
-        request: async (info, callbacks) => {
-            const { messages, message } = info;
+    const [agent] = useXAgent<BubbleDataType>({
+        baseURL: 'https://api.x.ant.design/api/llm_siliconflow_deepSeek-r1-distill-1wen-7b',
+        model: 'DeepSeek-R1-Distill-Qwen-7B',
+        dangerouslyApiKey: 'Bearer sk-xxxxxxxxxxxxxxxxxxxx',
+    });
+    const loading = agent.isRequesting();
 
-            const { onSuccess, onUpdate, onError } = callbacks;
-
-            // current message
-            console.log('message', message);
-
-            // history messages
-            console.log('messages', messages);
-
-            let content: string = '';
-
-            try {
-                const stream = await client.chat.completions.create({
-                    model: 'qwen-plus',
-                    messages: [{ role: 'user', content: message || '' }],
-                    stream: true,
-                });
-
-                for await (const chunk of stream) {
-                    content += chunk.choices[0]?.delta?.content || '';
-
-                    onUpdate({ content } as any);
-                }
-
-                onSuccess([{ content }] as any);
-            } catch (error) {
-                // handle error
-                // onError();
+    const { onRequest, messages, setMessages } = useXChat({
+        agent,
+        requestFallback: (_, { error }) => {
+            if (error.name === 'AbortError') {
+                return {
+                    content: 'Request is aborted',
+                    role: 'assistant',
+                };
             }
+            return {
+                content: 'Request failed, please try again!',
+                role: 'assistant',
+            };
+        },
+        transformMessage: (info) => {
+            const { originMessage, chunk } = info || {};
+            let currentContent = '';
+            let currentThink = '';
+            try {
+                if (chunk?.data && !chunk?.data.includes('DONE')) {
+                    const message = JSON.parse(chunk?.data);
+                    currentThink = message?.choices?.[0]?.delta?.reasoning_content || '';
+                    currentContent = message?.choices?.[0]?.delta?.content || '';
+                }
+            } catch (error) {
+                console.error(error);
+            }
+
+            let content = '';
+
+            if (!originMessage?.content && currentThink) {
+                content = `<think>${currentThink}`;
+            } else if (
+                originMessage?.content?.includes('<think>') &&
+                !originMessage?.content.includes('</think>') &&
+                currentContent
+            ) {
+                content = `${originMessage?.content}</think>${currentContent}`;
+            } else {
+                content = `${originMessage?.content || ''}${currentThink}${currentContent}`;
+            }
+
+            return {
+                content: content,
+                role: 'assistant',
+                status: info.status,
+            };
+        },
+        resolveAbortController: (controller) => {
+            abortController.current = controller;
         },
     });
 
-    const {
-        // use to send message
-        onRequest,
-        // use to render messages
-        messages,
-        setMessages,
-    } = useXChat({ agent });
-    const loading = agent.isRequesting();
     // ==================== Event ====================
     const onSubmit = (val: string) => {
         if (!val) return;
 
         if (loading) {
-            message.error('请求进行中，请等待请求完成。');
+            message.error('Request is in progress, please wait for the request to complete.');
             return;
         }
 
         onRequest({
             stream: true,
-            message: val,
+            message: { role: 'user', content: val },
         });
     };
+
 
     // ==================== Nodes ====================
     // 提取侧边栏内容为独立组件
@@ -665,7 +677,7 @@ const Independent: React.FC = () => {
                 /* 🌟 消息列表 */
                 <Bubble.List
                     items={messages?.map((i) => ({
-                        ...i.message as any,
+                        ...i.message,
                         classNames: {
                             content: i.status === 'loading' ? styles.loadingMessage : '',
                         },
