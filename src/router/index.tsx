@@ -1,13 +1,13 @@
 /// Router configuration
 /// 路由配置
 
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createHashRouter, Navigate } from 'react-router-dom';
 import App from '../App';
 import Home from '../components/ui';
 
 /// Router configuration
 /// 路由配置
-export const router = createBrowserRouter([
+export const router = createHashRouter([
     {
         path: '/',
         element: <App />,

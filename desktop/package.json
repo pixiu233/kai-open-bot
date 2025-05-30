@@ -13,6 +13,7 @@
     "build:react": "cd .. && npm run build",
     "build": "npm run build:react && electron-builder",
     "build:unsigned": "npm run build:react && electron-builder --publish=never --config.mac.identity=null",
+    "build:unsigned-no-react": "electron-builder --publish=never --config.mac.identity=null",
     "build:arm64": "npm run build:react && electron-builder --mac --arm64 --publish=never --config.mac.identity=null",
     "dist": "npm run build",
     "pack": "electron-builder --dir",
