@@ -13,6 +13,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Electron 窗口拖拽支持 */
+.electron-drag {
+  -webkit-app-region: drag;
+}
+
+.electron-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* 为顶部区域添加拖拽支持（如果需要自定义标题栏时启用） */
+/*
+.layout {
+  .mobileHeader {
+    -webkit-app-region: drag;
+    
+    button, .logo {
+      -webkit-app-region: no-drag;
+    }
+  }
+}
+*/
+
 a {
   font-weight: 500;
   color: #646cff;

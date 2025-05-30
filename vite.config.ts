@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: './', // 使用相对路径，解决Electron加载问题
   esbuild: {
     // Skip TypeScript type checking during build for faster compilation
     // 跳过构建时的TypeScript类型检查以加快编译速度

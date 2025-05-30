@@ -45,12 +45,12 @@ type BubbleDataType = {
 const DEFAULT_CONVERSATIONS_ITEMS = [
     {
         key: 'default-0',
-        label: 'What is 凯哥人工智能?',
+        label: '什么是凯哥人工智能?',
         group: 'Today',
     },
     {
         key: 'default-1',
-        label: 'How to quickly install and import components?',
+        label: '怎么学习凯哥人工智能?',
         group: 'Today',
     },
     {
@@ -711,8 +711,8 @@ const Independent: React.FC = () => {
                     <Welcome
                         variant="borderless"
                         icon="https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp"
-                        title="你好，我是凯哥人工智能"
-                        description="基于 Ant Design，AGI 产品界面解决方案，创造更好的智能视觉~"
+                        title="你好，我是世界上最牛逼的凯哥人工智能"
+                        description="基于 BAt Design，AGI   产品界面解决方案，创造更好的智能视觉~"
                         extra={
                             <Space>
                                 <Button icon={<ShareAltOutlined />} />
