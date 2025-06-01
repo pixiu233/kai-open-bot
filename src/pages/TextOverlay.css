@@ -1,0 +1,89 @@
+.text-overlay {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.overlay-content {
+  flex: 1;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.selected-text {
+  font-size: 13px !important;
+  color: white !important;
+  line-height: 1.3;
+  word-break: break-all;
+  display: block;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.overlay-actions .ant-btn {
+  flex: 1;
+  min-width: 60px;
+  font-size: 11px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.overlay-actions .ant-btn-primary {
+  background: rgba(24, 144, 255, 0.8);
+  border-color: rgba(24, 144, 255, 0.8);
+}
+
+.overlay-actions .ant-btn-primary:hover {
+  background: rgba(24, 144, 255, 1) !important;
+  border-color: rgba(24, 144, 255, 1) !important;
+}
+
+.overlay-actions .ant-btn:not(.ant-btn-primary) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.overlay-actions .ant-btn:not(.ant-btn-primary):hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
+}
+
+/* 确保图标和文字颜色正确 */
+.overlay-actions .ant-btn .anticon {
+  color: inherit;
+}
+
+/* 全局样式覆盖 */
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+}
+
+#root {
+  height: 100vh;
+  background: transparent;
+} 

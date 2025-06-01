@@ -44,16 +44,7 @@ type BubbleDataType = {
     content: string;
 };
 
-// 声明 window.electronAPI 类型
-declare global {
-  interface Window {
-    electronAPI?: {
-      minimizeWindow: () => void;
-      maximizeWindow: () => void;
-      closeWindow: () => void;
-    };
-  }
-}
+
 
 const DEFAULT_CONVERSATIONS_ITEMS = [
     {

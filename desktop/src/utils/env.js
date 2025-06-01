@@ -3,6 +3,11 @@
  * @returns {boolean} true if in development mode
  */
 function isDev() {
+    // 强制设置为开发模式，确保连接到开发服务器
+    if (process.env.NODE_ENV !== 'production') {
+        return true;
+    }
+    
     return process.env.NODE_ENV === 'development' ||
         process.defaultApp ||
         /[\\/]electron-prebuilt[\\/]/.test(process.execPath) ||

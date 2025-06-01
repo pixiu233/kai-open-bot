@@ -1,23 +1,16 @@
 import { HomeOutlined, SettingOutlined, MinusOutlined, BorderOutlined, CloseOutlined } from '@ant-design/icons';
-import { Layout, Typography, Button } from 'antd';
+import { Layout, Typography, Button, message } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import './App.css';
 import { appConfig, isDevelopment } from './config/env';
 import { ROUTES } from './router';
 import { isElectron, electronWindowControls } from './utils/environment';
+import { useGlobalTextActions } from './hooks/useGlobalTextActions';
 
 const { Title } = Typography;
 
 // 声明 window.electronAPI 类型
-declare global {
-  interface Window {
-    electronAPI?: {
-      minimizeWindow: () => void;
-      maximizeWindow: () => void;
-      closeWindow: () => void;
-    };
-  }
-}
+
 
 function App() {
   const navigate = useNavigate();
@@ -25,6 +18,24 @@ function App() {
   
   // 判断是否在 Electron 环境中
   const electronEnv = isElectron();
+
+  // 设置全局文字操作处理器
+  useGlobalTextActions(
+    // 翻译处理
+    (text: string) => {
+      console.log('🌐 处理翻译请求:', text);
+      message.info('翻译功能：' + text.substring(0, 50) + '...');
+      // 这里可以调用翻译API或跳转到翻译页面
+    },
+    // 解释处理
+    (text: string) => {
+      console.log('📖 处理解释请求:', text);
+      message.info('解释功能：' + text.substring(0, 50) + '...');
+      // 这里可以调用AI解释API或跳转到聊天页面
+    },
+    // 语音播报处理（使用默认实现）
+    undefined
+  );
 
   /// Display environment info in development mode
   /// 在开发模式下显示环境信息

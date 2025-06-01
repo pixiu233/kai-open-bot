@@ -20,6 +20,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onWindowMaximized: (callback) => ipcRenderer.on('window-maximized', callback),
     onWindowUnmaximized: (callback) => ipcRenderer.on('window-unmaximized', callback),
 
+    // Text action events - 文字操作事件
+    onTranslateText: (callback) => ipcRenderer.on('translate-text', callback),
+    onExplainText: (callback) => ipcRenderer.on('explain-text', callback),
+    onSpeakText: (callback) => ipcRenderer.on('speak-text', callback),
+    
+    // 新增：文字选择相关的IPC通信
+    onTextSelected: (callback) => {
+        ipcRenderer.on('text-selected', (event, text) => {
+            // 只传递文字字符串，不传递事件对象
+            callback(text);
+        });
+    },
+    sendTextAction: (data) => ipcRenderer.send('text-action', data),
+    onTextAction: (callback) => {
+        ipcRenderer.on('text-action', (event, data) => {
+            // 只传递数据对象，不传递事件对象
+            callback(data);
+        });
+    },
+
     // Remove listeners
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
 

@@ -1,6 +1,16 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+// 设置进程编码
+if (process.platform === 'win32') {
+    process.env.LANG = 'zh_CN.UTF-8';
+    // Windows下不使用 setEncoding
+} else {
+    process.stdout.setEncoding('utf8');
+    process.stderr.setEncoding('utf8');
+}
+
+const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 const path = require('path');
 const { isDev } = require('./utils/env');
+const TextSelectionHandler = require('./utils/textSelection');
 
 // 开发环境下启用热更新
 if (isDev()) {
@@ -12,6 +22,7 @@ if (isDev()) {
 
 // Keep a global reference of the window object
 let mainWindow;
+let textSelectionHandler;
 
 function createWindow() {
     // Create the browser window
@@ -84,10 +95,23 @@ function createWindow() {
 }
 
 // This method will be called when Electron has finished initialization
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    createWindow();
+    
+    // 初始化文字选择处理器 - 传入主窗口引用
+    textSelectionHandler = new TextSelectionHandler(mainWindow);
+    await textSelectionHandler.init();
+    
+    console.log('🎯 全局文字选择监听已启动');
+});
 
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
+    // 清理资源
+    if (textSelectionHandler) {
+        textSelectionHandler.destroy();
+    }
+    
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -106,94 +130,7 @@ app.on('web-contents-created', (event, contents) => {
     });
 });
 
-// Create application menu
-function createMenu() {
-    const template = [
-        {
-            label: 'File',
-            submenu: [
-                {
-                    label: 'New',
-                    accelerator: 'CmdOrCtrl+N',
-                    click: () => {
-                        mainWindow.webContents.send('menu-new');
-                    }
-                },
-                {
-                    label: 'Open',
-                    accelerator: 'CmdOrCtrl+O',
-                    click: () => {
-                        mainWindow.webContents.send('menu-open');
-                    }
-                },
-                { type: 'separator' },
-                {
-                    label: 'Exit',
-                    accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-                    click: () => {
-                        app.quit();
-                    }
-                }
-            ]
-        },
-        {
-            label: 'Edit',
-            submenu: [
-                { role: 'undo' },
-                { role: 'redo' },
-                { type: 'separator' },
-                { role: 'cut' },
-                { role: 'copy' },
-                { role: 'paste' }
-            ]
-        },
-        {
-            label: 'View',
-            submenu: [
-                { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
-                { type: 'separator' },
-                { role: 'resetZoom' },
-                { role: 'zoomIn' },
-                { role: 'zoomOut' },
-                { type: 'separator' },
-                { role: 'togglefullscreen' }
-            ]
-        },
-        {
-            label: 'Window',
-            submenu: [
-                { role: 'minimize' },
-                { role: 'close' }
-            ]
-        }
-    ];
 
-    if (process.platform === 'darwin') {
-        template.unshift({
-            label: app.getName(),
-            submenu: [
-                { role: 'about' },
-                { type: 'separator' },
-                { role: 'services' },
-                { type: 'separator' },
-                { role: 'hide' },
-                { role: 'hideOthers' },
-                { role: 'unhide' },
-                { type: 'separator' },
-                { role: 'quit' }
-            ]
-        });
-    }
-
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-}
-
-app.whenReady().then(() => {
-    createMenu();
-});
 
 // IPC handlers
 ipcMain.handle('get-app-version', () => {
@@ -203,6 +140,69 @@ ipcMain.handle('get-app-version', () => {
 ipcMain.handle('get-platform', () => {
     return process.platform;
 });
+
+// 处理文字操作请求
+ipcMain.on('text-action', (event, data) => {
+    const { action, text } = data;
+    
+    console.log(`📝 执行文字操作: ${action}，文字: ${text.substring(0, 50)}...`);
+    
+    // 如果是来自悬浮窗口的操作，使用textSelectionHandler处理
+    if (textSelectionHandler) {
+        textSelectionHandler.handleTextAction(data);
+        return;
+    }
+    
+    // 否则使用原有的处理方式
+    switch (action) {
+        case 'translate':
+            handleTranslate(text);
+            break;
+        case 'explain':
+            handleExplain(text);
+            break;
+        case 'search':
+            handleSearch(text);
+            break;
+        case 'speak':
+            handleSpeak(text);
+            break;
+        default:
+            console.log('❌ 未知的文字操作:', action);
+    }
+});
+
+// 文字操作处理函数
+function handleTranslate(text) {
+    // 发送到主窗口进行翻译
+    if (mainWindow) {
+        mainWindow.webContents.send('translate-text', text);
+        mainWindow.show();
+        mainWindow.focus();
+    }
+}
+
+function handleExplain(text) {
+    // 发送到主窗口进行解释
+    if (mainWindow) {
+        mainWindow.webContents.send('explain-text', text);
+        mainWindow.show();
+        mainWindow.focus();
+    }
+}
+
+function handleSearch(text) {
+    // 在默认浏览器中搜索
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+    shell.openExternal(searchUrl);
+}
+
+function handleSpeak(text) {
+    // 发送到主窗口进行语音播报
+    if (mainWindow) {
+        mainWindow.webContents.send('speak-text', text);
+    }
+}
 
 // Window control handlers
 ipcMain.on('window-minimize', () => {

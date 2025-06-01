@@ -6,9 +6,12 @@
   "scripts": {
     "start": "electron .",
     "dev": "npm run build:react && electron .",
+    "dev:debug": "npm run build:react && electron --inspect=5858 .",
     "dev:hot": "concurrently \"npm run watch:react\" \"npm run watch:electron\"",
+    "dev:hot:debug": "concurrently \"npm run watch:react\" \"npm run watch:electron:debug\"",
     "watch:react": "cd .. && npm run dev",
     "watch:electron": "nodemon --watch src --exec \"electron .\"",
+    "watch:electron:debug": "nodemon --watch src --exec \"electron --inspect=5858 .\"",
     "dev:main": "nodemon --watch src --exec \"electron .\"",
     "build:react": "cd .. && npm run build",
     "build": "npm run build:react && electron-builder",
@@ -93,5 +96,9 @@
     "linux": {
       "target": "AppImage"
     }
+  },
+  "dependencies": {
+    "clipboardy": "^2.3.0",
+    "node-global-key-listener": "^0.3.0"
   }
 }

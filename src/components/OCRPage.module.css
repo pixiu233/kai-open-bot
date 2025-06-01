@@ -1,0 +1,9 @@
+.ocrPage {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.ocrResult {
+  margin-top: 20px;
+} 
