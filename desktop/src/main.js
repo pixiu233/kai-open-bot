@@ -29,7 +29,10 @@ function createWindow() {
         icon: path.join(__dirname, '../assets/icon.png'),
         show: false,
         movable: true,
-        titleBarStyle: process.platform === 'darwin' ? 'default' : 'default'
+        frame: false,
+        transparent: false,
+        titleBarStyle: 'hidden',
+        autoHideMenuBar: true
     });
 
     // Load the React app
@@ -42,6 +45,9 @@ function createWindow() {
     console.log('🔍 Resolved path:', path.resolve(__dirname, '../dist/index.html'));
 
     mainWindow.loadURL(startUrl);
+    
+    // 完全移除菜单栏
+    mainWindow.removeMenu();
 
     // 监听页面加载事件
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {

@@ -19,6 +19,9 @@ import {
     ScheduleOutlined,
     ShareAltOutlined,
     SmileOutlined,
+    MinusOutlined,
+    BorderOutlined,
+    CloseOutlined,
 } from '@ant-design/icons';
 import {
     Attachments,
@@ -34,13 +37,23 @@ import { Avatar, Button, Drawer, Flex, type GetProp, Space, Spin, message } from
 import { createStyles } from 'antd-style';
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState } from 'react';
+import { isElectron, electronWindowControls } from '../../utils/environment';
 
 type BubbleDataType = {
     role: string;
     content: string;
 };
 
-
+// 声明 window.electronAPI 类型
+declare global {
+  interface Window {
+    electronAPI?: {
+      minimizeWindow: () => void;
+      maximizeWindow: () => void;
+      closeWindow: () => void;
+    };
+  }
+}
 
 const DEFAULT_CONVERSATIONS_ITEMS = [
     {
@@ -157,6 +170,10 @@ const useStyle = createStyles(({ token, css }) => {
         position: relative;
         overflow: hidden;
         
+        &.electron-layout {
+          height: calc(100dvh - 32px);
+        }
+        
         /* 全局隐藏滚动条样式 */
         * {
           scrollbar-width: none; /* Firefox */
@@ -175,7 +192,6 @@ const useStyle = createStyles(({ token, css }) => {
         
         @media (max-width: 768px) {
           flex-direction: column;
-    
         }
       `,
         // 手机端顶部菜单栏
@@ -298,9 +314,8 @@ const useStyle = createStyles(({ token, css }) => {
         flex-direction: column;
         padding-block: ${token.paddingLG}px;
         gap: 16px;
-        width: 100%;
+        
         @media (max-width: 768px) {
-          height: calc(100vh - 48px);
           padding: 8px;
           gap: 8px;
           overflow: hidden;
@@ -454,24 +469,17 @@ const useStyle = createStyles(({ token, css }) => {
 const Independent: React.FC = () => {
     const { styles } = useStyle();
     const abortController = useRef<AbortController>(null);
+    // 判断是否在 Electron 环境中
+    const electronEnv = isElectron();
 
     // ==================== State ====================
     const [messageHistory, setMessageHistory] = useState<Record<string, any>>({});
-
     const [conversations, setConversations] = useState(DEFAULT_CONVERSATIONS_ITEMS);
     const [curConversation, setCurConversation] = useState(DEFAULT_CONVERSATIONS_ITEMS[0].key);
-
     const [attachmentsOpen, setAttachmentsOpen] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<GetProp<typeof Attachments, 'items'>>([]);
-
     const [inputValue, setInputValue] = useState('');
-
-    // 新增移动端抽屉状态
     const [drawerOpen, setDrawerOpen] = useState(false);
-
-    /**
-     * 🔔 Please replace the BASE_URL, PATH, MODEL, API_KEY with your own values.
-     */
 
     // ==================== Runtime ====================
     const [agent] = useXAgent<BubbleDataType>({
@@ -844,7 +852,7 @@ const Independent: React.FC = () => {
 
     // ==================== Render =================
     return (
-        <div className={styles.layout}>
+        <div className={`${styles.layout} ${electronEnv ? 'electron-layout' : ''}`}>
             {mobileHeader}
             {chatSider}
 

@@ -13,7 +13,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Electron 窗口拖拽支持 */
+/* 窗口拖拽区域 */
+.titlebar-drag-region {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  -webkit-app-region: drag;
+  z-index: 1000;
+}
+
+/* 不可拖拽的区域 */
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* 原有的拖拽样式保持不变 */
 .electron-drag {
   -webkit-app-region: drag;
 }
